@@ -1,5 +1,5 @@
 [package]
-name = "cli-todo-list"
+name = "doit"
 version = "0.2.0"
 authors = ["carlos <cadusouza14@gmail.com>"]
 edition = "2018"
