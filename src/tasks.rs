@@ -2,13 +2,13 @@ extern crate serde;
 extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
-// use std::collections::HashMap;
+use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskItem {
-    title: String,
-    description: String,
-    is_completed: bool,
+    pub title: String,
+    pub description: String,
+    pub is_completed: bool,
 }
 
 impl TaskItem {
@@ -32,15 +32,15 @@ impl TaskItem {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskList {
     tasks: Vec<TaskItem>,
 }
 
 impl TaskList {
-    pub fn default() -> Self {
+    pub fn new(tasks: &[TaskItem]) -> Self {
         Self {
-            tasks: Vec::default(),
+            tasks: tasks.to_vec(),
         }
     }
 
@@ -54,8 +54,8 @@ impl TaskList {
         );
     }
 
-    pub fn add_task(&mut self, task: TaskItem) {
-        self.tasks.push(task)
+    pub fn add_task(&mut self, task: &TaskItem) {
+        self.tasks.push(task.clone())
     }
 
     pub fn remove_task(&mut self, index: usize) -> TaskItem {
@@ -63,27 +63,28 @@ impl TaskList {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+// I don't know what to name this struct, so I'm just going to leave this as it is for now
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Program {
-    tasks_lists: std::collections::HashMap<String, TaskList>,
+    pub tasks_lists: HashMap<String, TaskList>,
 }
 
 impl Program {
-    // pub fn default() -> Self {
-    //     Self {
-    //         tasks_lists: HashMap::default(),
-    //     }
-    // }
+    pub fn new(tasks_lists: &HashMap<String, TaskList>) -> Self {
+        Self {
+            tasks_lists: tasks_lists.clone(),
+        }
+    }
 
-    pub fn load_from_json_file(file: &std::fs::File) -> Result<Self, serde_json::Error> {
+    pub fn from_json_file(file: &std::fs::File) -> Result<Self, serde_json::Error> {
         serde_json::from_reader(std::io::BufReader::new(file))
     }
 
-    pub fn add_list(&mut self, list_name: String, list: TaskList) -> Option<TaskList> {
-        self.tasks_lists.insert(list_name, list)
+    pub fn add_list(&mut self, list_name: &String, list: &TaskList) -> Option<TaskList> {
+        self.tasks_lists.insert(list_name.clone(), list.clone())
     }
 
-    pub fn add_task(&mut self, list_name: &String, task: TaskItem) -> Option<()> {
+    pub fn add_task(&mut self, list_name: &String, task: &TaskItem) -> Option<()> {
         Some(self.tasks_lists.get_mut(list_name)?.add_task(task))
     }
 
@@ -103,12 +104,10 @@ impl Program {
         ))
     }
 
-    pub fn format_all_tasks(&self, depth: usize) -> Option<String> {
-        Some(
-            self.tasks_lists
-                .iter()
-                .map(|(list_name, list)| format!("{}: \n{}\n", list_name, list.format_tasks(depth)))
-                .collect(),
-        )
+    pub fn format_all_tasks(&self, depth: usize) -> String {
+        self.tasks_lists
+            .iter()
+            .map(|(list_name, list)| format!("{}: \n{}\n", list_name, list.format_tasks(depth)))
+            .collect()
     }
 }
