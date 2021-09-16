@@ -61,6 +61,13 @@ impl TaskList {
     pub fn remove_task(&mut self, index: usize) -> TaskItem {
         self.tasks.remove(index)
     }
+
+    pub fn find_task_with_title(&self, title: &str) -> Option<(usize, &TaskItem)> {
+        self.tasks
+            .iter()
+            .enumerate()
+            .find(|task| task.1.title == title)
+    }
 }
 
 // I don't know what to name this struct, so I'm just going to leave this as it is for now
