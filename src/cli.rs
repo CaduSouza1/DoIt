@@ -1,42 +1,112 @@
 use std::num::ParseIntError;
 
-pub fn get_list_name(matches: &clap::ArgMatches) -> Result<String, clap::ErrorKind> {
-    matches
-        .value_of("name")
-        .ok_or(clap::ErrorKind::EmptyValue)
-        .and_then(|name| Ok(name.to_string()))
-}
+use crate::tasks;
 
-pub fn get_task_title(matches: &clap::ArgMatches) -> Result<String, clap::ErrorKind> {
-    matches
-        .value_of("title")
-        .ok_or(clap::ErrorKind::EmptyValue)
-        .and_then(|title| Ok(title.to_string()))
-}
-
-pub fn get_task_description(matches: &clap::ArgMatches) -> Result<String, clap::ErrorKind> {
-    matches
-        .value_of("description")
-        .ok_or(clap::ErrorKind::EmptyValue)
-        .and_then(|description| Ok(description.to_string()))
-}
-
-pub enum ParseIndexError {
-    ParseError(ParseIntError),
-    EmptyValue(clap::ErrorKind),
-}
-
-impl From<ParseIntError> for ParseIndexError {
-    fn from(v: ParseIntError) -> Self {
-        Self::ParseError(v)
+pub fn parse_add_command(matches: &clap::ArgMatches, program: &mut tasks::Program) {
+    match matches.subcommand() {
+        ("task", Some(task_matches)) => {
+            program
+                .add_task(
+                    &get_list_name(task_matches)
+                        .or(Some("default".to_string()))
+                        .unwrap(),
+                    &tasks::TaskItem::new(
+                        &get_task_title(task_matches).expect("No title given"),
+                        &get_task_description(task_matches)
+                            .or(Some("".to_string()))
+                            .unwrap(),
+                        false,
+                    ),
+                )
+                .expect("No list with given name found");
+        }
+        ("list", Some(list_matches)) => {
+            program.add_list(
+                &get_list_name(list_matches).expect("No list name given"),
+                &tasks::TaskList::new(&[]),
+            );
+        }
+        ("", None) => {}
+        _ => unreachable!(),
     }
 }
 
-pub fn get_index(matches: &clap::ArgMatches) -> Result<usize, ParseIndexError> {
+pub fn parse_remove_command(matches: &clap::ArgMatches, program: &mut tasks::Program) {
+    match matches.subcommand() {
+        ("task", Some(task_matches)) => {
+            let list_name = get_list_name(task_matches)
+                .or(Some("default".to_string()))
+                .unwrap();
+            let index = get_index(task_matches).unwrap().unwrap();
+
+            program.remove_task(&list_name, index);
+        }
+        ("list", Some(list_matches)) => {
+            program.remove_list(&get_list_name(list_matches).expect("No list name given"));
+        }
+        ("", None) => {}
+        _ => unreachable!(),
+    }
+}
+
+pub fn parse_show_command(matches: &clap::ArgMatches, program: &tasks::Program) {
+    match matches.subcommand() {
+        ("list", Some(list_matches)) => {
+            println!(
+                "{}",
+                program
+                    .format_task_list(&get_list_name(list_matches).expect("No list name given"), 1)
+                    .unwrap()
+            );
+        }
+        ("all", Some(_)) => {
+            println!("{}", program.format_all_tasks(1));
+        }
+        ("", None) => {}
+        _ => unreachable!(),
+    }
+}
+
+pub fn parse_complete_command(matches: &clap::ArgMatches, program: &mut tasks::Program) {
+    match matches.subcommand() {
+        ("task", Some(task_matches)) => {
+            let list_name = get_list_name(task_matches)
+                .or(Some("default".to_string()))
+                .unwrap();
+            let index = get_index(task_matches).unwrap().unwrap();
+
+            program.complete_task(&list_name, index);
+        }
+        ("list", Some(list_matches)) => {
+            program.complete_list(&get_list_name(list_matches).expect("No list name given"));
+        }
+        ("", None) => {}
+        _ => unreachable!(),
+    }
+}
+
+pub fn get_list_name(matches: &clap::ArgMatches) -> Option<String> {
+    matches
+        .value_of("name")
+        .and_then(|name| Some(name.to_string()))
+}
+
+pub fn get_task_title(matches: &clap::ArgMatches) -> Option<String> {
+    matches
+        .value_of("title")
+        .and_then(|title| Some(title.to_string()))
+}
+
+pub fn get_task_description(matches: &clap::ArgMatches) -> Option<String> {
+    matches
+        .value_of("description")
+        .and_then(|description| Some(description.to_string()))
+}
+
+pub fn get_index(matches: &clap::ArgMatches) -> Option<Result<usize, ParseIntError>> {
     matches
         .value_of("index")
-        .ok_or(ParseIndexError::EmptyValue(clap::ErrorKind::EmptyValue))
-        .and_then(|index| Ok(index.parse()?))
+        .and_then(|index| Some(index.parse()))
 }
 
 #[cfg(test)]
