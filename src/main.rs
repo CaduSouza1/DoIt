@@ -1,13 +1,9 @@
-#[macro_use]
-
 mod cli;
 mod tasks;
 
-extern crate clap;
-
-// use std::io::Write;
-use std::collections::HashMap;
-use clap::{App, SubCommand, Arg};
+use clap::{App, Arg, SubCommand};
+use std::io;
+use std::io::Write;
 use tasks::{Program, TaskItem, TaskList};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -124,49 +120,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut program = Program::from_json_file(&std::fs::File::open(&filepath)?)?;
 
     match app.get_matches().subcommand() {
-        ("add", Some(add_matches)) => match add_matches.subcommand() {
-            ("task", Some(task_matches)) => {
-                program
-                    .add_task(
-                        &cli::get_list_name(task_matches).unwrap(),
-                        &TaskItem::new(
-                            &cli::get_task_title(task_matches).unwrap(),
-                            &cli::get_task_description(task_matches).unwrap(),
-                            false,
-                        ),
-                    )
-                    .expect("No list with given name found");
-            }
-            ("list", Some(list_matches)) => {
-                program.add_list(&cli::get_list_name(list_matches).unwrap(), &TaskList::new(&[]));
-            }
-            ("", None) => {}
-            _ => unreachable!(),
-        },
-        ("rm", Some(rm_matches)) => match rm_matches.subcommand() {
-            ("task", Some(task_matches)) => {
-                program.remove_task(
-                    &cli::get_list_name(task_matches).unwrap(),
-                    cli::get_index(task_matches).unwrap(),
-                );
-            }
-            ("list", Some(list_matches)) => {
-                program.remove_list(&cli::get_list_name(list_matches).unwrap());
-            }
-            ("", None) => {}
-            _ => unreachable!(),
-        },
-        ("show", Some(show_matches)) => match show_matches.subcommand() {
-            ("list", Some(list_matches)) => {}
-            ("all", Some(all_matches)) => {}
-            ("", None) => {}
-            _ => unreachable!(),
-        },
+        ("add", Some(add_matches)) => cli::parse_add_command(add_matches, &mut program),
+        ("remove", Some(rm_matches)) => cli::parse_remove_command(rm_matches, &mut program),
+        ("show", Some(show_matches)) => cli::parse_show_command(show_matches, &program),
+        ("complete", Some(complete_matches)) => {
+            cli::parse_complete_command(complete_matches, &mut program)
+        }
         ("", None) => {}
         _ => unreachable!(),
     }
 
-    println!("{:#?}", program);
+    std::fs::File::create("tasks.json")?
+        .write_all(serde_json::to_string_pretty(&program)?.as_bytes())?;
 
     Ok(())
 }
