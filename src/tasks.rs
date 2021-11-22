@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 extern crate serde;
 extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct TaskItem {
     pub title: String,
     pub description: String,
@@ -16,7 +18,7 @@ impl TaskItem {
         return Self {
             title: title.to_string(),
             description: description.to_string(),
-            is_completed: is_completed,
+            is_completed,
         };
     }
 
@@ -32,9 +34,9 @@ impl TaskItem {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct TaskList {
-    tasks: Vec<TaskItem>,
+    pub tasks: Vec<TaskItem>,
 }
 
 impl TaskList {
@@ -72,11 +74,11 @@ impl TaskList {
 
 // I don't know what to name this struct, so I'm just going to leave this as it is for now
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Program {
+pub struct TaskLists {
     pub tasks_lists: HashMap<String, TaskList>,
 }
 
-impl Program {
+impl TaskLists {
     pub fn new(tasks_lists: &HashMap<String, TaskList>) -> Self {
         Self {
             tasks_lists: tasks_lists.clone(),
@@ -116,5 +118,19 @@ impl Program {
             .iter()
             .map(|(list_name, list)| format!("{}: \n{}\n", list_name, list.format_tasks(depth)))
             .collect()
+    }
+
+    pub fn complete_task(&mut self, list_name: &String, task_index: usize) -> Option<()> {
+        Some(self.tasks_lists.get_mut(list_name)?.tasks[task_index].is_completed = true)
+    }
+
+    pub fn complete_list(&mut self, list_name: &String) -> Option<()> {
+        Some(
+            self.tasks_lists
+                .get_mut(list_name)?
+                .tasks
+                .iter_mut()
+                .for_each(|task| task.is_completed = true),
+        )
     }
 }
