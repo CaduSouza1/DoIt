@@ -2,7 +2,6 @@ use std::num::ParseIntError;
 
 use crate::tasks::{TaskItem, TaskList, TaskLists};
 
-// to put them in a match I needed to give the same return type to all.
 pub fn parse_add_command(matches: &clap::ArgMatches, task_lists: &mut TaskLists) {
     // Most of the values used in this function have a default value or throw an error in the clap argument parsing stage.
     // So it isn't a problem to just call .unwrap()
