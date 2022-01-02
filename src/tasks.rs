@@ -15,22 +15,22 @@ pub struct TaskItem {
 
 impl TaskItem {
     pub fn new(title: &str, description: &str, is_completed: bool) -> Self {
-        return Self {
+        Self {
             title: title.to_string(),
             description: description.to_string(),
             is_completed,
-        };
+        }
     }
 
     pub fn format(&self, depth: usize) -> String {
-        return format!(
+        format!(
             "{}[{}] {} \n{}{}\n\n",
-            std::iter::repeat("\t").take(depth).collect::<String>(),
+            "\t".repeat(depth),
             if self.is_completed { "X" } else { " " },
             self.title,
-            std::iter::repeat("\t").take(depth + 1).collect::<String>(),
+            "\t".repeat(depth + 1),
             self.description
-        );
+        )
     }
 }
 
@@ -47,13 +47,13 @@ impl TaskList {
     }
 
     pub fn format_tasks(&self, depth: usize) -> String {
-        return format!(
+        format!(
             "{}\n",
             self.tasks
                 .iter()
                 .map(|task| task.format(depth))
                 .collect::<String>()
-        );
+        )
     }
 
     pub fn add_task(&mut self, task: &TaskItem) {
@@ -89,23 +89,24 @@ impl TaskLists {
         serde_json::from_reader(std::io::BufReader::new(file))
     }
 
-    pub fn add_list(&mut self, list_name: &String, list: &TaskList) -> Option<TaskList> {
-        self.tasks_lists.insert(list_name.clone(), list.clone())
+    pub fn add_list(&mut self, list_name: &str, list: &TaskList) -> Option<TaskList> {
+        self.tasks_lists.insert(list_name.to_string(), list.clone())
     }
 
-    pub fn add_task(&mut self, list_name: &String, task: &TaskItem) -> Option<()> {
-        Some(self.tasks_lists.get_mut(list_name)?.add_task(task))
+    pub fn add_task(&mut self, list_name: &str, task: &TaskItem) -> Option<()> {
+        self.tasks_lists.get_mut(list_name)?.add_task(task);
+        Some(())
     }
 
-    pub fn remove_list(&mut self, list_name: &String) -> Option<TaskList> {
+    pub fn remove_list(&mut self, list_name: &str) -> Option<TaskList> {
         self.tasks_lists.remove(list_name)
     }
 
-    pub fn remove_task(&mut self, list_name: &String, task_index: usize) -> Option<TaskItem> {
+    pub fn remove_task(&mut self, list_name: &str, task_index: usize) -> Option<TaskItem> {
         Some(self.tasks_lists.get_mut(list_name)?.remove_task(task_index))
     }
 
-    pub fn format_task_list(&self, list_name: &String, depth: usize) -> Option<String> {
+    pub fn format_task_list(&self, list_name: &str, depth: usize) -> Option<String> {
         Some(format!(
             "{}: \n{}\n",
             list_name,
@@ -120,17 +121,17 @@ impl TaskLists {
             .collect()
     }
 
-    pub fn complete_task(&mut self, list_name: &String, task_index: usize) -> Option<()> {
-        Some(self.tasks_lists.get_mut(list_name)?.tasks[task_index].is_completed = true)
+    pub fn complete_task(&mut self, list_name: &str, task_index: usize) -> Option<()> {
+        self.tasks_lists.get_mut(list_name)?.tasks[task_index].is_completed = true;
+        Some(())
     }
 
-    pub fn complete_list(&mut self, list_name: &String) -> Option<()> {
-        Some(
-            self.tasks_lists
-                .get_mut(list_name)?
-                .tasks
-                .iter_mut()
-                .for_each(|task| task.is_completed = true),
-        )
+    pub fn complete_list(&mut self, list_name: &str) -> Option<()> {
+        self.tasks_lists
+            .get_mut(list_name)?
+            .tasks
+            .iter_mut()
+            .for_each(|task| task.is_completed = true);
+        Some(())
     }
 }
