@@ -1,6 +1,5 @@
 mod app;
 mod cli;
-mod errors;
 mod tasks;
 
 use app::create_app;
@@ -24,7 +23,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("", None) => (),
         _ => unreachable!(),
     };
-    
     File::create("tasks.json")?.write_all(serde_json::to_string_pretty(&task_lists)?.as_bytes())?;
     Ok(())
 }
