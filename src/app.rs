@@ -3,11 +3,16 @@ use clap::{App, Arg, SubCommand};
 pub fn create_app<'a, 'b>() -> App<'a, 'b> {
     App::new("doit")
         .arg(
-            Arg::with_name("file")
-                .short("f")
-                .long("file")
+            Arg::with_name("save-file")
+                .short("s")
                 .takes_value(true)
                 .help("Sets the file where the data will be stored"),
+        )
+        .arg(
+            Arg::with_name("read-file")
+                .short("r")
+                .takes_value(true)
+                .help("Sets the file where the data will be read"),
         )
         .subcommands(vec![
             SubCommand::with_name("add")
