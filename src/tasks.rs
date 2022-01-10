@@ -24,7 +24,7 @@ impl TaskItem {
 
     pub fn format(&self, depth: usize) -> String {
         format!(
-            "{}[{}] {} \n{}{}\n\n",
+            "{}[{}] {} \n{}{}\n",
             "\t".repeat(depth),
             if self.is_completed { "X" } else { " " },
             self.title,
@@ -47,13 +47,10 @@ impl TaskList {
     }
 
     pub fn format_tasks(&self, depth: usize) -> String {
-        format!(
-            "{}\n",
-            self.tasks
-                .iter()
-                .map(|task| task.format(depth))
-                .collect::<String>()
-        )
+        self.tasks
+            .iter()
+            .map(|task| task.format(depth))
+            .collect::<String>()
     }
 
     pub fn add_task(&mut self, task: &TaskItem) {
@@ -108,7 +105,7 @@ impl TaskLists {
 
     pub fn format_task_list(&self, list_name: &str, depth: usize) -> Option<String> {
         Some(format!(
-            "{}: \n{}\n",
+            "{}: \n{}",
             list_name,
             self.tasks_lists.get(list_name)?.format_tasks(depth)
         ))
@@ -117,7 +114,7 @@ impl TaskLists {
     pub fn format_all_tasks(&self, depth: usize) -> String {
         self.tasks_lists
             .iter()
-            .map(|(list_name, list)| format!("{}: \n{}\n", list_name, list.format_tasks(depth)))
+            .map(|(list_name, list)| format!("{}: \n{}", list_name, list.format_tasks(depth)))
             .collect()
     }
 
