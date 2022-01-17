@@ -1,6 +1,6 @@
-use std::num::ParseIntError;
-
 use crate::tasks::{TaskItem, TaskList, TaskLists};
+use std::path::Path;
+use std::{fs::File, num::ParseIntError};
 
 pub fn parse_add_command(matches: &clap::ArgMatches, task_lists: &mut TaskLists) {
     // Most of the values used in this function have a default value or throw an error in the clap argument parsing stage.
@@ -19,7 +19,8 @@ pub fn parse_add_command(matches: &clap::ArgMatches, task_lists: &mut TaskLists)
                 .expect("No list with given name found");
         }
         ("list", Some(list_matches)) => {
-            task_lists.add_list(&get_list_name(list_matches).unwrap(), &TaskList::new(&[]));
+            let list_name = get_list_name(list_matches).unwrap();
+            task_lists.add_list(&list_name, &TaskList::new(&list_name, &[]));
         }
         ("", None) => {}
         _ => unreachable!(),
@@ -100,6 +101,28 @@ pub fn get_task_description(matches: &clap::ArgMatches) -> Option<String> {
 
 pub fn get_index(matches: &clap::ArgMatches) -> Option<Result<usize, ParseIntError>> {
     Some(matches.value_of("index")?.parse())
+}
+
+pub fn get_read_file(matches: &clap::ArgMatches) -> Option<Result<File, std::io::Error>> {
+    matches
+        .value_of("read-file")
+        .or(matches.value_of("file"))
+        .or(Some(&format!(
+            "{}/tasks/tasks.json",
+            home::home_dir().unwrap().to_str().unwrap()
+        )))
+        .and_then(|filepath| Some(File::open(Path::new(filepath))))
+}
+
+pub fn get_save_file(matches: &clap::ArgMatches) -> Option<Result<File, std::io::Error>> {
+    matches
+        .value_of("read-file")
+        .or(matches.value_of("file"))
+        .or(Some(&format!(
+            "{}/tasks/tasks.json",
+            home::home_dir().unwrap().to_str().unwrap()
+        )))
+        .and_then(|filepath| Some(File::create(Path::new(filepath))))
 }
 
 #[cfg(test)]

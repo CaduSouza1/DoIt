@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
-extern crate serde;
-extern crate serde_json;
-
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    io::{BufRead, SeekFrom},
+};
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct TaskItem {
@@ -36,17 +36,23 @@ impl TaskItem {
 
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct TaskList {
+    pub name: String,
     pub tasks: Vec<TaskItem>,
 }
 
 impl TaskList {
-    pub fn new(tasks: &[TaskItem]) -> Self {
+    pub fn new(name: &str, tasks: &[TaskItem]) -> Self {
         Self {
+            name: name.to_string(),
             tasks: tasks.to_vec(),
         }
     }
 
-    pub fn format_tasks(&self, depth: usize) -> String {
+    pub fn format(&self, depth: usize) -> String {
+        format!("{}: \n{}", self.name, self.format_tasks(depth))
+    }
+
+    fn format_tasks(&self, depth: usize) -> String {
         self.tasks
             .iter()
             .map(|task| task.format(depth))

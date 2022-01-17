@@ -14,6 +14,12 @@ pub fn create_app<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .help("Sets the file where the data will be read"),
         )
+        .arg(
+            Arg::with_name("file")
+                .short("f")
+                .takes_value(true)
+                .help("Sets the file where the data will be read and write to. This option does not take precedence over the other io options"),
+        )
         .subcommands(vec![
             SubCommand::with_name("add")
                 .about("Adds tasks to existing lists or creates new empty lists")

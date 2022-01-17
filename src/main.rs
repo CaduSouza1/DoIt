@@ -3,20 +3,13 @@ mod cli;
 mod tasks;
 
 use app::create_app;
-use std::{fs::File, io::Write};
+use std::io::Write;
 use tasks::TaskLists;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = create_app();
     let matches = app.get_matches();
-    let default_file = "tasks.json"; // default file for read and write operations
-    let read_file = File::open(
-        matches
-            .value_of("read-file")
-            .or(Some(default_file))
-            .unwrap(),
-    )?;
-
+    let read_file = cli::get_read_file(&matches).unwrap()?;
     let mut task_lists = TaskLists::from_json_file(&read_file)?;
 
     match matches.subcommand() {
@@ -30,13 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => unreachable!(),
     };
 
-    let mut save_file = File::create(
-        matches
-            .value_of("save-file")
-            .or(Some(default_file))
-            .unwrap(),
-    )?;
-
+    let mut save_file = cli::get_save_file(&matches).unwrap()?;
     save_file.write_all(serde_json::to_string_pretty(&task_lists)?.as_bytes())?;
     Ok(())
 }
