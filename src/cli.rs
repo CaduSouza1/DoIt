@@ -107,19 +107,15 @@ pub fn get_read_file(matches: &clap::ArgMatches) -> Option<Result<File, std::io:
     matches
         .value_of("read-file")
         .or(matches.value_of("file"))
-        .or(Some(&format!(
-            "{}/tasks/tasks.json",
-            home::home_dir().unwrap().to_str().unwrap()
-        )))
         .and_then(|filepath| Some(File::open(Path::new(filepath))))
 }
 
 pub fn get_save_file(matches: &clap::ArgMatches) -> Option<Result<File, std::io::Error>> {
     matches
-        .value_of("read-file")
+        .value_of("save-file")
         .or(matches.value_of("file"))
         .or(Some(&format!(
-            "{}/tasks/tasks.json",
+            "{}/tasks.json",
             home::home_dir().unwrap().to_str().unwrap()
         )))
         .and_then(|filepath| Some(File::create(Path::new(filepath))))

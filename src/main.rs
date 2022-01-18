@@ -3,14 +3,18 @@ mod cli;
 mod tasks;
 
 use app::create_app;
+use std::collections::HashMap;
 use std::io::Write;
 use tasks::TaskLists;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = create_app();
     let matches = app.get_matches();
-    let read_file = cli::get_read_file(&matches).unwrap()?;
-    let mut task_lists = TaskLists::from_json_file(&read_file)?;
+    let mut task_lists = if let Some(read_file) = cli::get_read_file(&matches) {
+        TaskLists::from_json_file(&read_file?)?
+    } else {
+        TaskLists::new(&HashMap::new())
+    };
 
     match matches.subcommand() {
         ("add", Some(add_matches)) => cli::parse_add_command(add_matches, &mut task_lists),
