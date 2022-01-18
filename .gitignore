@@ -2,3 +2,5 @@
 vim.txt
 /lists
 /.vscode
+tasks.json
+.vimspector.json
