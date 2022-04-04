@@ -1,33 +1,63 @@
 mod app;
-mod cli;
 mod tasks;
 
-use app::create_app;
-use std::collections::HashMap;
-use std::io::Write;
+use std::{fs::File, io::Write};
+
+use app::{Cli, Commands};
+use clap::Parser;
 use tasks::TaskLists;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app = create_app();
-    let matches = app.get_matches();
-    let mut task_lists = if let Some(read_file) = cli::get_read_file(&matches) {
-        TaskLists::from_json_file(&read_file?)?
-    } else {
-        TaskLists::new(&HashMap::new())
-    };
+    let cli = Cli::parse();
+    let tasks_filepath = cli.tasks_filepath.or(Some("tasks.json".into())).unwrap();
+    let mut lists = TaskLists::from_json_file(&File::open(&tasks_filepath)?)?;
 
-    match matches.subcommand() {
-        ("add", Some(add_matches)) => cli::parse_add_command(add_matches, &mut task_lists),
-        ("remove", Some(rm_matches)) => cli::parse_remove_command(rm_matches, &mut task_lists)?,
-        ("show", Some(show_matches)) => cli::parse_show_command(show_matches, &task_lists),
-        ("complete", Some(complete_matches)) => {
-            cli::parse_complete_command(complete_matches, &mut task_lists)?
+    match cli.command {
+        Commands::NewList { name } => {
+            lists
+                .add_list(&name, &tasks::TaskList::new(&name, &[]))
+                .unwrap();
         }
-        ("", None) => (),
-        _ => unreachable!(),
-    };
 
-    let mut save_file = cli::get_save_file(&matches).unwrap()?;
-    save_file.write_all(serde_json::to_string_pretty(&task_lists)?.as_bytes())?;
+        Commands::AddTask {
+            list,
+            title,
+            description,
+            completed,
+        } => {
+            lists
+                .add_task(
+                    &list,
+                    &tasks::TaskItem::new(&title, &description, completed.or(Some(false)).unwrap()),
+                )
+                .unwrap();
+        }
+
+        Commands::RemoveList { name } => {
+            lists.remove_list(&name).unwrap();
+        }
+
+        Commands::RemoveTask { list_name, index } => {
+            lists.remove_task(&list_name, index).unwrap();
+        }
+
+        Commands::CompleteList { name } => {
+            lists.complete_list(&name).unwrap();
+        }
+
+        Commands::CompleteTask { list_name, index } => {
+            lists.complete_task(&list_name, index).unwrap();
+        }
+
+        Commands::ShowList { name } => {
+            println!("{}", lists.format_task_list(&name, 1).unwrap())
+        }
+
+        Commands::ShowAll {} => {
+            println!("{}", lists.format_all_tasks(1))
+        }
+    }
+
+    File::create(tasks_filepath)?.write_all(serde_json::to_string_pretty(&lists)?.as_bytes())?;
     Ok(())
 }
